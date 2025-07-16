@@ -1,0 +1,39 @@
+██████╗ ██╗  ██╗██╗   ██╗     ██████╗ ███████╗███╗   ██╗███████╗██████╗  █████╗ ████████╗ ██████╗ ██████╗
+██╔════╝ ██║ ██╔╝██║   ██║    ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗
+╚█████╗  █████╔╝ ██║   ██║    ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ██████╔╝███████║   ██║   ██║   ██║██████╔╝
+ ╚═══██╗██╔═██╗  ██║   ██║    ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ██╔══██╗██╔══██║   ██║   ██║   ██║██╔══██╗
+██████╔╝██║  ██╗ ╚██████╔╝    ╚██████╔╝███████╗██║ ╚████║███████╗██║  ██║██║  ██║   ██║   ╚██████╔╝██║  ██║
+╚═════╝ ╚═╝  ╚═╝  ╚═════╝      ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+
+:: Sistema de Generación de Códigos SKU para Tienda de Ropa Infantil ::
+:: Powered by Spring Boot ${spring-boot.version} & Java ${java.version} ::
+
+🧸 Funcionalidades Principales:
+   ✅ Generación automática de códigos SKU únicos (12 dígitos)
+   ✅ Gestión completa de productos y configuraciones
+   ✅ Sistema de reportes y estadísticas avanzadas
+   ✅ Control de acceso con autenticación JWT
+   ✅ Exportación multi-formato (CSV, Excel, JSON)
+   ✅ Sistema de backup y restauración
+   ✅ Interfaz web responsive y moderna
+
+🔧 Información Técnica:
+   📋 Versión: ${application.version:1.0.0}
+   ☕ Java: ${java.version}
+   🚀 Spring Boot: ${spring-boot.version}
+   🌱 Spring Framework: ${spring-framework.version}
+   🛡️ Spring Security: ${spring-security.version}
+   🗄️ Base de Datos: MySQL ${mysql.version:8.0}
+
+📊 URLs Importantes:
+   🌐 Aplicación: http://localhost:${server.port:8080}${server.servlet.context-path:}
+   📚 API Docs: http://localhost:${server.port:8080}${server.servlet.context-path:}/swagger-ui.html
+   ❤️ Health Check: http://localhost:${server.port:8080}${server.servlet.context-path:}/actuator/health
+   📈 Métricas: http://localhost:${server.port:8080}${server.servlet.context-path:}/actuator/metrics
+
+👥 Desarrollado por: SKU Generator Development Team
+📧 Soporte: dev@empresa.com
+📅 Año: 2024
+📄 Licencia: MIT
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════

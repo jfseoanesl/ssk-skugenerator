@@ -1,0 +1,224 @@
+# ===================================================================
+# SKU Generator - Development Profile Configuration
+# ===================================================================
+# Configuración específica para el ambiente de desarrollo
+# ===================================================================
+
+spring:
+  # ===== DEVELOPMENT DATABASE =====
+  datasource:
+    url: jdbc:mysql://localhost:3306/sku_generator_dev?useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8
+    username: sku_dev_user
+    password: sku_dev_password
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 180000
+      connection-timeout: 10000
+      leak-detection-threshold: 30000
+
+  # ===== JPA DEVELOPMENT SETTINGS =====
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        highlight_sql: true
+        generate_statistics: true
+        jdbc:
+          batch_size: 10
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+
+  # ===== THYMELEAF DEVELOPMENT =====
+  thymeleaf:
+    cache: false
+
+  # ===== WEB RESOURCES DEVELOPMENT =====
+  web:
+    resources:
+      cache:
+        period: 0
+        cachecontrol:
+          no-cache: true
+          no-store: true
+
+  # ===== DEVTOOLS =====
+  devtools:
+    restart:
+      enabled: true
+      additional-paths:
+        - src/main/java
+        - src/main/resources
+      exclude:
+        - static/**
+        - public/**
+        - templates/**
+    livereload:
+      enabled: true
+      port: 35729
+    remote:
+      secret: skugenerator-dev-secret
+
+  # ===== H2 CONSOLE (for debugging) =====
+  h2:
+    console:
+      enabled: false # Set to true if you want to use H2 for development testing
+
+# ===================================================================
+# APPLICATION DEVELOPMENT CONFIGURATION
+# ===================================================================
+
+app:
+  # ===== JWT DEVELOPMENT SETTINGS =====
+  jwt:
+    secret: dev-secret-key-for-jwt-tokens-development-only-not-for-production
+    expiration: 86400000 # 24 hours for development
+
+  # ===== CORS DEVELOPMENT SETTINGS =====
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:4200,http://localhost:8080,http://localhost:8081
+
+  # ===== STORAGE DEVELOPMENT SETTINGS =====
+  storage:
+    base-directory: ./dev-storage
+    backup-directory: ./dev-storage/backups
+    export-directory: ./dev-storage/exports
+    temp-directory: ./dev-storage/temp
+    upload-directory: ./dev-storage/uploads
+    max-backup-files: 5
+
+  # ===== SECURITY DEVELOPMENT SETTINGS =====
+  security:
+    password:
+      min-length: 4 # Relaxed for development
+      require-uppercase: false
+      require-lowercase: false
+      require-numbers: false
+      require-special-chars: false
+    account-lockout:
+      enabled: false # Disabled for development convenience
+
+  # ===== AUDIT DEVELOPMENT SETTINGS =====
+  audit:
+    enabled: true
+    log-successful-authentications: true
+    log-failed-authentications: true
+    log-data-changes: true
+
+# ===================================================================
+# SERVER DEVELOPMENT CONFIGURATION
+# ===================================================================
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        secure: false # HTTP allowed in development
+  error:
+    include-stacktrace: always
+    include-exception: true
+    include-message: always
+    include-binding-errors: always
+
+# ===================================================================
+# LOGGING DEVELOPMENT CONFIGURATION
+# ===================================================================
+
+logging:
+  level:
+    root: INFO
+    com.skugenerator: DEBUG
+    org.springframework: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.data: DEBUG
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG
+    org.flywaydb: DEBUG
+    org.thymeleaf: DEBUG
+
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+  file:
+    name: ./dev-logs/sku-generator-dev.log
+
+# ===================================================================
+# ACTUATOR DEVELOPMENT CONFIGURATION
+# ===================================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # All endpoints exposed in development
+  endpoint:
+    health:
+      show-details: always
+    configprops:
+      show-values: always
+    env:
+      show-values: always
+  info:
+    env:
+      enabled: true
+
+# ===================================================================
+# SPRINGDOC DEVELOPMENT CONFIGURATION
+# ===================================================================
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+  api-docs:
+    enabled: true
+  show-actuator: true
+
+# ===================================================================
+# DEVELOPMENT SPECIFIC FEATURES
+# ===================================================================
+
+# Mock Email Configuration for Development
+spring.mail:
+  host: localhost
+  port: 1025 # MailHog or similar for development
+  username:
+  password:
+  properties:
+    mail:
+      smtp:
+        auth: false
+        starttls:
+          enable: false
+
+# Development Flyway Settings
+spring.flyway:
+  clean-disabled: false # Allow clean in development
+
+# Development Cache Settings
+spring.cache:
+  type: simple # Use simple cache in development
+
+# ===================================================================
+# DEVELOPMENT INITIAL DATA
+# ===================================================================
+
+# Enable SQL initialization for development
+spring.sql:
+  init:
+    mode: always
+    continue-on-error: false
+    separator: ;
+    encoding: UTF-8

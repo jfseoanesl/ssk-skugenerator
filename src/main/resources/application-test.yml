@@ -1,0 +1,306 @@
+# ===================================================================
+# SKU Generator - Test Profile Configuration
+# ===================================================================
+# Configuración específica para testing unitario e integración
+# ===================================================================
+
+spring:
+  # ===== TEST DATABASE (H2 IN-MEMORY) =====
+  datasource:
+    url: jdbc:h2:mem:sku_generator_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 60000
+      connection-timeout: 5000
+
+  # ===== H2 CONSOLE FOR DEBUGGING TESTS =====
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  # ===== JPA TEST SETTINGS =====
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        highlight_sql: false
+        generate_statistics: false
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 5
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+    defer-datasource-initialization: true
+
+  # ===== SQL INITIALIZATION FOR TESTS =====
+  sql:
+    init:
+      mode: always
+      continue-on-error: false
+      separator: ;
+      encoding: UTF-8
+      data-locations:
+        - classpath:test-data.sql
+      schema-locations:
+        - classpath:test-schema.sql
+
+  # ===== FLYWAY DISABLED FOR TESTS =====
+  flyway:
+    enabled: false
+
+  # ===== THYMELEAF TEST SETTINGS =====
+  thymeleaf:
+    cache: false
+
+  # ===== TEST CACHE =====
+  cache:
+    type: simple
+
+  # ===== TEST MAIL (MockMailSender) =====
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+    test-connection: false
+
+# ===================================================================
+# APPLICATION TEST CONFIGURATION
+# ===================================================================
+
+app:
+  # ===== JWT TEST SETTINGS =====
+  jwt:
+    secret: test-secret-key-for-jwt-tokens-testing-only-not-secure
+    expiration: 3600000 # 1 hour for tests
+    refresh-expiration: 7200000 # 2 hours for tests
+    issuer: sku-generator-test
+    audience: sku-generator-test-users
+
+  # ===== CORS TEST SETTINGS =====
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+
+  # ===== STORAGE TEST SETTINGS =====
+  storage:
+    base-directory: ./test-storage
+    backup-directory: ./test-storage/backups
+    export-directory: ./test-storage/exports
+    temp-directory: ./test-storage/temp
+    upload-directory: ./test-storage/uploads
+    max-backup-files: 2
+    cleanup:
+      enabled: false # Disabled for test isolation
+
+  # ===== SECURITY TEST SETTINGS =====
+  security:
+    password:
+      min-length: 3 # Relaxed for testing
+      require-uppercase: false
+      require-lowercase: false
+      require-numbers: false
+      require-special-chars: false
+    account-lockout:
+      enabled: false # Disabled for testing
+
+  # ===== AUDIT TEST SETTINGS =====
+  audit:
+    enabled: true
+    log-successful-authentications: false
+    log-failed-authentications: false
+    log-data-changes: true
+    retention-days: 1
+
+  # ===== BUSINESS TEST SETTINGS =====
+  business:
+    export:
+      max-records-csv: 1000
+      max-records-excel: 500
+      max-records-json: 1000
+
+# ===================================================================
+# SERVER TEST CONFIGURATION
+# ===================================================================
+
+server:
+  port: 0 # Random port for tests
+  servlet:
+    session:
+      cookie:
+        secure: false
+        http-only: true
+        same-site: lax
+      timeout: PT1H # 1 hour for tests
+  error:
+    include-stacktrace: always
+    include-exception: true
+    include-message: always
+    include-binding-errors: always
+
+# ===================================================================
+# LOGGING TEST CONFIGURATION
+# ===================================================================
+
+logging:
+  level:
+    root: WARN
+    com.skugenerator: INFO
+    org.springframework: WARN
+    org.springframework.security: WARN
+    org.springframework.test: INFO
+    org.springframework.boot.test: INFO
+    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+    org.testcontainers: INFO
+    com.zaxxer.hikari: WARN
+
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n"
+
+  file:
+    name: ./test-logs/sku-generator-test.log
+
+# ===================================================================
+# ACTUATOR TEST CONFIGURATION
+# ===================================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: false
+    ping:
+      enabled: true
+    diskspace:
+      enabled: false
+    db:
+      enabled: true
+
+# ===================================================================
+# SPRINGDOC TEST CONFIGURATION
+# ===================================================================
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# ===================================================================
+# TEST SPECIFIC CONFIGURATION
+# ===================================================================
+
+# TestContainers Configuration
+testcontainers:
+  reuse:
+    enable: true
+
+# Test Slices Configuration
+spring.test:
+  database:
+    replace: none # Don't replace datasource in @DataJpaTest
+  mockmvc:
+    print: none # Control MockMvc output
+
+# ===================================================================
+# TEST DATA CONFIGURATION
+# ===================================================================
+
+test:
+  data:
+    # Initial test users
+    users:
+      admin:
+        username: test_admin
+        password: admin123
+        email: admin@test.com
+        roles: ADMIN
+      user:
+        username: test_user
+        password: user123
+        email: user@test.com
+        roles: USER
+      viewer:
+        username: test_viewer
+        password: viewer123
+        email: viewer@test.com
+        roles: VIEWER
+
+    # Test product configurations
+    configurations:
+      types:
+        - code: "1"
+          name: "Test Product Type 1"
+        - code: "2"
+          name: "Test Product Type 2"
+      categories:
+        - code: "10"
+          name: "Test Category 1"
+        - code: "20"
+          name: "Test Category 2"
+      subcategories:
+        - category: "10"
+          code: "1"
+          name: "Test Subcategory 1-1"
+        - category: "10"
+          code: "2"
+          name: "Test Subcategory 1-2"
+      sizes:
+        - code: "01"
+          name: "Test Size 1"
+        - code: "02"
+          name: "Test Size 2"
+      colors:
+        - code: "01"
+          name: "Test Color 1"
+        - code: "02"
+          name: "Test Color 2"
+      seasons:
+        - code: "1"
+          name: "Test Season 1"
+        - code: "2"
+          name: "Test Season 2"
+
+    # Test products
+    products:
+      - type: "1"
+        category: "10"
+        subcategory: "1"
+        size: "01"
+        color: "01"
+        season: "1"
+        name: "Test Product 1"
+      - type: "2"
+        category: "20"
+        subcategory: "1"
+        size: "02"
+        color: "02"
+        season: "2"
+        name: "Test Product 2"

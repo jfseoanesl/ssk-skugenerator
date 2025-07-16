@@ -1,24 +1,85 @@
+# ===================================================================
+# SKU Generator - Git Ignore Configuration
+# ===================================================================
+
+# ===================================================================
+# Maven
+# ===================================================================
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
+# ===================================================================
+# IDE - IntelliJ IDEA
+# ===================================================================
+.idea/
 *.iws
 *.iml
 *.ipr
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
 
-### NetBeans ###
+# ===================================================================
+# IDE - Eclipse
+# ===================================================================
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.project
+.externalToolBuilders/
+*.launch
+*.pydevproject
+.cproject
+.autotools
+.factorypath
+.buildpath
+.target
+.tern-project
+.texlipse
+.springBeans
+.recommenders/
+.apt_generated/
+.apt_generated_test/
+.cache-main
+.scala_dependencies
+.worksheet
+
+# ===================================================================
+# IDE - VS Code
+# ===================================================================
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ===================================================================
+# IDE - NetBeans
+# ===================================================================
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -28,25 +89,270 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# ===================================================================
+# Spring Boot
+# ===================================================================
+spring-boot-starter-parent/
 
-### Logs ###
+# ===================================================================
+# Java
+# ===================================================================
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# ===================================================================
+# Logs
+# ===================================================================
 logs/
 *.log
+*.log.*
+*.out
+application.log*
+spring.log*
+/log/
+/logs/
+dev-logs/
+test-logs/
 
-### Backups ###
+# ===================================================================
+# Application Storage
+# ===================================================================
+storage/
 backups/
-
-### Temporary files ###
+exports/
 temp/
-*.tmp
+uploads/
+dev-storage/
+test-storage/
+/storage/
+/backups/
+/exports/
+/temp/
+/uploads/
 
-### Environment ###
+# ===================================================================
+# Database
+# ===================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+*.mv.db
+*.trace.db
+
+# ===================================================================
+# Environment Configuration
+# ===================================================================
 .env
 .env.local
+.env.development
 .env.production
+.env.test
+application-local.yml
+application-local.properties
+application-secret.yml
+application-secret.properties
 
-### OS ###
-.DS_Store
+# ===================================================================
+# Security & Secrets
+# ===================================================================
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+*.truststore
+secrets/
+ssl/
+certificates/
+
+# ===================================================================
+# Docker
+# ===================================================================
+docker/*/data/
+docker/mysql/data/
+docker/redis/data/
+docker/elasticsearch/data/
+docker/grafana/data/
+docker/prometheus/data/
+docker/nginx/logs/
+docker/mailhog/maildir/
+.docker/
+
+# ===================================================================
+# Node.js (for frontend development)
+# ===================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+
+# ===================================================================
+# Operating System
+# ===================================================================
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===================================================================
+# Package Files
+# ===================================================================
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ===================================================================
+# Testing
+# ===================================================================
+/test-output/
+/test-results/
+coverage/
+.nyc_output/
+*.lcov
+jacoco.exec
+jacoco-it.exec
+
+# ===================================================================
+# Documentation
+# ===================================================================
+/docs/build/
+/docs/_build/
+/docs/site/
+
+# ===================================================================
+# JetBrains IDEs
+# ===================================================================
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ===================================================================
+# Gradle (if used)
+# ===================================================================
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# ===================================================================
+# SonarQube
+# ===================================================================
+.sonar/
+.scannerwork/
+
+# ===================================================================
+# JProfiler
+# ===================================================================
+*.jprofile
+
+# ===================================================================
+# JMeter
+# ===================================================================
+*.jmx.bak
+jmeter.log
+
+# ===================================================================
+# Application Specific
+# ===================================================================
+
+# Configuration files with sensitive data
+config/application-production.yml
+config/application-staging.yml
+src/main/resources/application-production.yml
+src/main/resources/application-staging.yml
+
+# Generated API documentation
+/api-docs/
+/swagger-ui/
+
+# Performance testing results
+/performance/
+*.hprof
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files
+*.lock
+
+# ===================================================================
+# Custom Application Directories
+# ===================================================================
+
+# Custom storage directories
+/app-storage/
+/app-backups/
+/app-exports/
+/app-temp/
+
+# Custom log directories
+/app-logs/
+/application-logs/
+
+# Development utilities
+/dev-tools/
+/scripts/local/
+
+# ===================================================================
+# END OF .gitignore
+# ===================================================================

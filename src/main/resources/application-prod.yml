@@ -1,0 +1,448 @@
+# ===================================================================
+# SKU Generator - Production Profile Configuration
+# ===================================================================
+# Configuración específica para el ambiente de producción
+# IMPORTANTE: Revisar todas las configuraciones antes de desplegar
+# ===================================================================
+
+spring:
+  # ===== PRODUCTION DATABASE =====
+  datasource:
+    # Production database connection (configurar según ambiente)
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:sku_generator}?useSSL=true&requireSSL=true&serverTimezone=America/Bogota&allowPublicKeyRetrieval=false&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&maxReconnects=3&cachePrepStmts=true&useServerPrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&useLocalSessionState=true&elideSetAutoCommits=true&alwaysSendSetIsolation=false&enableQueryTimeouts=true&queryTimeoutKillsConnection=false
+
+    username: ${DB_USERNAME:sku_user}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # Production HikariCP Configuration
+    hikari:
+      pool-name: SkuGeneratorProdPool
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:30}
+      minimum-idle: ${DB_POOL_MIN_IDLE:10}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT:600000}      # 10 minutes
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT:30000}  # 30 seconds
+      max-lifetime: ${DB_POOL_MAX_LIFETIME:1800000}     # 30 minutes
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION:60000} # 1 minute
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT:5000}    # 5 seconds
+      connection-test-query: SELECT 1
+      auto-commit: true
+
+      # Production data source properties
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+        useLocalSessionState: true
+        rewriteBatchedStatements: true
+        cacheResultSetMetadata: true
+        cacheServerConfiguration: true
+        elideSetAutoCommits: true
+        maintainTimeStats: false
+        useSSL: true
+        requireSSL: true
+        verifyServerCertificate: true
+        trustCertificateKeyStoreUrl: ${DB_TRUST_STORE_URL:}
+        trustCertificateKeyStorePassword: ${DB_TRUST_STORE_PASSWORD:}
+
+  # ===== JPA PRODUCTION SETTINGS =====
+  jpa:
+    hibernate:
+      ddl-auto: validate # NEVER use create/update in production
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        highlight_sql: false
+        generate_statistics: true
+        jdbc:
+          batch_size: 50
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 2000
+
+  # ===== THYMELEAF PRODUCTION =====
+  thymeleaf:
+    cache: true
+
+  # ===== WEB RESOURCES PRODUCTION =====
+  web:
+    resources:
+      cache:
+        period: 31536000 # 1 year
+        cachecontrol:
+          max-age: 31536000
+          cache-public: true
+          must-revalidate: false
+          no-cache: false
+          no-store: false
+
+  # ===== PRODUCTION SESSION =====
+  session:
+    store-type: ${SESSION_STORE_TYPE:jdbc}
+    jdbc:
+      initialize-schema: embedded
+      table-name: SPRING_SESSION
+    timeout: PT8H # 8 hours
+
+  # ===== PRODUCTION MAIL =====
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${MAIL_HOST}
+        transport:
+          protocol: smtp
+    test-connection: true
+
+# ===================================================================
+# APPLICATION PRODUCTION CONFIGURATION
+# ===================================================================
+
+app:
+  # ===== JWT PRODUCTION SETTINGS =====
+  jwt:
+    # CRITICAL: Change this secret in production!
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:43200000} # 12 hours for production
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+    issuer: ${JWT_ISSUER:sku-generator-prod}
+    audience: ${JWT_AUDIENCE:sku-generator-users-prod}
+
+  # ===== CORS PRODUCTION SETTINGS =====
+  cors:
+    allowed-origins: ${CORS_ORIGINS}
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+    exposed-headers: Content-Length,Content-Range,X-Total-Count
+    allow-credentials: true
+    max-age: 3600
+
+  # ===== STORAGE PRODUCTION SETTINGS =====
+  storage:
+    base-directory: ${STORAGE_BASE_DIR:/opt/sku-generator/storage}
+    backup-directory: ${BACKUP_DIR:/opt/sku-generator/backups}
+    export-directory: ${EXPORT_DIR:/opt/sku-generator/exports}
+    temp-directory: ${TEMP_DIR:/opt/sku-generator/temp}
+    upload-directory: ${UPLOAD_DIR:/opt/sku-generator/uploads}
+    max-backup-files: ${MAX_BACKUP_FILES:30}
+    cleanup:
+      enabled: true
+      temp-files-max-age-days: 1
+      export-files-max-age-days: 7
+      log-files-max-age-days: 30
+
+  # ===== SECURITY PRODUCTION SETTINGS =====
+  security:
+    password:
+      min-length: 12
+      require-uppercase: true
+      require-lowercase: true
+      require-numbers: true
+      require-special-chars: true
+    account-lockout:
+      enabled: true
+      max-attempts: 3
+      lockout-duration-minutes: 60
+    session:
+      max-sessions-per-user: 2
+      timeout-minutes: 480 # 8 hours
+
+  # ===== AUDIT PRODUCTION SETTINGS =====
+  audit:
+    enabled: true
+    log-successful-authentications: true
+    log-failed-authentications: true
+    log-data-changes: true
+    retention-days: 2555 # 7 years for compliance
+
+  # ===== BUSINESS PRODUCTION SETTINGS =====
+  business:
+    export:
+      max-records-csv: 500000
+      max-records-excel: 100000
+      max-records-json: 100000
+
+# ===================================================================
+# SERVER PRODUCTION CONFIGURATION
+# ===================================================================
+
+server:
+  port: ${SERVER_PORT:8080}
+
+  # SSL Configuration (if terminating SSL at application level)
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEY_STORE:}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:}
+    trust-store: ${SSL_TRUST_STORE:}
+    trust-store-password: ${SSL_TRUST_STORE_PASSWORD:}
+
+  servlet:
+    session:
+      cookie:
+        name: SKUGENERATOR-SESSION
+        secure: true # HTTPS only
+        http-only: true
+        same-site: strict
+        max-age: 28800 # 8 hours
+        domain: ${COOKIE_DOMAIN:}
+        path: /
+      timeout: PT8H # 8 hours
+
+  # Production compression
+  compression:
+    enabled: true
+    mime-types:
+      - text/html
+      - text/xml
+      - text/plain
+      - text/css
+      - text/javascript
+      - application/javascript
+      - application/json
+      - application/xml
+      - image/svg+xml
+    min-response-size: 1024
+
+  # HTTP/2 Support
+  http2:
+    enabled: true
+
+  # Error handling in production
+  error:
+    whitelabel:
+      enabled: false
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+    path: /error
+
+  # Undertow production tuning
+  undertow:
+    buffer-size: 2048
+    io-threads: ${UNDERTOW_IO_THREADS:#{T(java.lang.Runtime).getRuntime().availableProcessors() * 2}}
+    worker-threads: ${UNDERTOW_WORKER_THREADS:#{T(java.lang.Runtime).getRuntime().availableProcessors() * 16}}
+    direct-buffers: true
+    max-http-post-size: 52428800 # 50MB
+    options:
+      server:
+        RECORD_REQUEST_START_TIME: true
+      socket:
+        TCP_NODELAY: true
+
+# ===================================================================
+# LOGGING PRODUCTION CONFIGURATION
+# ===================================================================
+
+logging:
+  level:
+    root: WARN
+    com.skugenerator: INFO
+    org.springframework: WARN
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.springframework.data: WARN
+    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    com.zaxxer.hikari: WARN
+    org.flywaydb: INFO
+    org.thymeleaf: WARN
+
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+  file:
+    name: ${LOG_FILE:/opt/sku-generator/logs/sku-generator.log}
+    max-size: 100MB
+    max-history: 90
+    total-size-cap: 10GB
+
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 90
+      total-size-cap: 10GB
+      file-name-pattern: "/opt/sku-generator/logs/sku-generator.%d{yyyy-MM-dd}.%i.log.gz"
+
+# ===================================================================
+# ACTUATOR PRODUCTION CONFIGURATION
+# ===================================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+        exclude: shutdown,threaddump,heapdump,env,configprops,beans,loggers
+      base-path: /actuator
+    jmx:
+      exposure:
+        exclude: "*"
+
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace
+        readiness:
+          include: readinessState,db
+
+    info:
+      enabled: true
+
+    metrics:
+      enabled: true
+
+    prometheus:
+      enabled: true
+
+    shutdown:
+      enabled: false
+
+  health:
+    diskspace:
+      enabled: true
+      threshold: 1GB
+    db:
+      enabled: true
+    mail:
+      enabled: true
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+
+  info:
+    build:
+      enabled: true
+    env:
+      enabled: false # Security: don't expose environment variables
+    git:
+      enabled: true
+      mode: simple
+    java:
+      enabled: true
+    os:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# ===================================================================
+# SPRINGDOC PRODUCTION CONFIGURATION
+# ===================================================================
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false} # Usually disabled in production
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:false} # Usually disabled in production
+  show-actuator: false
+
+# ===================================================================
+# PRODUCTION SECURITY HEADERS
+# ===================================================================
+
+# Security headers will be configured in SecurityConfig
+spring.security:
+  headers:
+    content-security-policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'"
+    frame-options: DENY
+    content-type-options: nosniff
+    referrer-policy: strict-origin-when-cross-origin
+
+# ===================================================================
+# FLYWAY PRODUCTION CONFIGURATION
+# ===================================================================
+
+spring.flyway:
+  enabled: true
+  baseline-on-migrate: false
+  validate-on-migrate: true
+  clean-disabled: true # NEVER allow clean in production
+  out-of-order: false
+  locations: classpath:db/migration
+
+# ===================================================================
+# CACHE PRODUCTION CONFIGURATION
+# ===================================================================
+
+spring.cache:
+  type: caffeine
+  caffeine:
+    spec: maximumSize=10000,expireAfterWrite=600s,recordStats
+
+# ===================================================================
+# PRODUCTION MONITORING AND OBSERVABILITY
+# ===================================================================
+
+# Micrometer Tracing (if using distributed tracing)
+management.tracing:
+  sampling:
+    probability: 0.1 # Sample 10% of requests in production
+
+# ===================================================================
+# PRODUCTION ENVIRONMENT VARIABLES REFERENCE
+# ===================================================================
+
+# Required Environment Variables for Production:
+#
+# Database:
+# - DB_HOST: Database host
+# - DB_PORT: Database port (default: 3306)
+# - DB_NAME: Database name
+# - DB_USERNAME: Database username
+# - DB_PASSWORD: Database password (REQUIRED)
+#
+# Security:
+# - JWT_SECRET: JWT signing secret (REQUIRED, min 256 bits)
+# - SSL_KEY_STORE: SSL keystore path (if SSL enabled)
+# - SSL_KEY_STORE_PASSWORD: SSL keystore password (if SSL enabled)
+#
+# CORS:
+# - CORS_ORIGINS: Allowed origins for CORS (REQUIRED)
+#
+# Mail:
+# - MAIL_HOST: SMTP host
+# - MAIL_USERNAME: SMTP username
+# - MAIL_PASSWORD: SMTP password
+#
+# Storage:
+# - STORAGE_BASE_DIR: Base storage directory
+# - BACKUP_DIR: Backup directory
+# - EXPORT_DIR: Export directory
+#
+# Optional:
+# - SERVER_PORT: Server port (default: 8080)
+# - LOG_FILE: Log file path
+# - SPRINGDOC_ENABLED: Enable API docs (default: false)
+# - SWAGGER_UI_ENABLED: Enable Swagger UI (default: false)

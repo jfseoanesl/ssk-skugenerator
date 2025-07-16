@@ -1,109 +1,580 @@
+# ===================================================================
+# SKU Generator Application Configuration
+# ===================================================================
+# Configuración principal para la aplicación de generación de códigos SKU
+# Autor: SKU Generator Development Team
+# Versión: 1.0.0
+# ===================================================================
+
 spring:
+  # ===== APPLICATION CONFIGURATION =====
   application:
     name: sku-generator
+    admin:
+      enabled: true
 
+  # ===== PROFILE CONFIGURATION =====
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+    include:
+      - actuator
+      - security
 
+  # ===== MAIN CLASS CONFIGURATION =====
+  main:
+    banner-mode: console
+    allow-bean-definition-overriding: false
+    allow-circular-references: false
+    lazy-initialization: false
+
+  # ===== DATABASE CONFIGURATION =====
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:sku_generator}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    # Connection URL with optimizations
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:sku_generator}?useSSL=${DB_SSL:false}&serverTimezone=${DB_TIMEZONE:America/Bogota}&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&cachePrepStmts=true&useServerPrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&useLocalSessionState=true&elideSetAutoCommits=true&alwaysSendSetIsolation=false&enableQueryTimeouts=false
+
     username: ${DB_USERNAME:sku_user}
     password: ${DB_PASSWORD:sku_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      idle-timeout: 300000
-      connection-timeout: 20000
 
+    # HikariCP Connection Pool Configuration
+    hikari:
+      pool-name: SkuGeneratorHikariPool
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT:300000}      # 5 minutes
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT:20000}  # 20 seconds
+      max-lifetime: ${DB_POOL_MAX_LIFETIME:1800000}     # 30 minutes
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION:60000} # 60 seconds
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT:5000}    # 5 seconds
+      connection-test-query: SELECT 1
+      auto-commit: true
+
+      # HikariCP additional properties
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+        useLocalSessionState: true
+        rewriteBatchedStatements: true
+        cacheResultSetMetadata: true
+        cacheServerConfiguration: true
+        elideSetAutoCommits: true
+        maintainTimeStats: false
+
+  # ===== JPA/HIBERNATE CONFIGURATION =====
   jpa:
+    # DDL Configuration
     hibernate:
-      ddl-auto: ${DDL_AUTO:update}
-    show-sql: ${SHOW_SQL:false}
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+
+    # SQL Logging
+    show-sql: ${JPA_SHOW_SQL:false}
+
+    # JPA Properties
     properties:
       hibernate:
+        # Database Dialect
         dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
-        use_sql_comments: true
-    open-in-view: false
 
+        # SQL Formatting
+        format_sql: ${JPA_FORMAT_SQL:false}
+        use_sql_comments: ${JPA_SQL_COMMENTS:false}
+        highlight_sql: ${JPA_HIGHLIGHT_SQL:false}
+
+        # Performance Optimizations
+        jdbc:
+          batch_size: ${JPA_BATCH_SIZE:25}
+          batch_versioned_data: true
+          order_inserts: true
+          order_updates: true
+
+        # Cache Configuration
+        cache:
+          use_second_level_cache: ${JPA_SECOND_LEVEL_CACHE:true}
+          use_query_cache: ${JPA_QUERY_CACHE:true}
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+
+        # Statistics
+        generate_statistics: ${JPA_STATISTICS:false}
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 1000
+
+        # Connection Handling
+        connection:
+          provider_disables_autocommit: true
+
+    # JPA Configuration
+    open-in-view: false
+    defer-datasource-initialization: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  # ===== FLYWAY CONFIGURATION =====
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
+    baseline-version: 1.0.0
+    baseline-description: Initial SKU Generator Schema
+    encoding: UTF-8
+    sql-migration-prefix: V
+    sql-migration-separator: __
+    sql-migration-suffixes: .sql
+    table: flyway_schema_history
+
+  # ===== THYMELEAF CONFIGURATION =====
   thymeleaf:
     cache: ${THYMELEAF_CACHE:false}
     prefix: classpath:/templates/
     suffix: .html
     encoding: UTF-8
     mode: HTML
+    servlet:
+      content-type: text/html
+      produce-partial-output-while-processing: true
+    enable-spring-el-compiler: true
+    render-hidden-markers-before-checkboxes: true
 
-  security:
-    user:
-      name: admin
-      password: ${ADMIN_PASSWORD:admin123}
+  # ===== WEB CONFIGURATION =====
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+        - classpath:/public/
+      cache:
+        period: ${WEB_CACHE_PERIOD:86400} # 24 hours in seconds
+        cachecontrol:
+          max-age: ${WEB_CACHE_MAX_AGE:86400}
+          must-revalidate: false
+          no-cache: false
+          no-store: false
+          cache-public: true
 
+  # ===== SERVLET CONFIGURATION =====
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      enabled: true
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:50MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:50MB}
+      file-size-threshold: ${MULTIPART_FILE_SIZE_THRESHOLD:2KB}
+      location: ${MULTIPART_LOCATION:${java.io.tmpdir}}
+      resolve-lazily: false
 
-# Configuración de la aplicación
+  # ===== MAIL CONFIGURATION (for future password recovery) =====
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${MAIL_HOST:smtp.gmail.com}
+        transport:
+          protocol: smtp
+    test-connection: false
+
+  # ===== CACHE CONFIGURATION =====
+  cache:
+    type: ${CACHE_TYPE:caffeine}
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=300s,recordStats
+    cache-names:
+      - products
+      - configurations
+      - users
+      - reports
+      - statistics
+
+  # ===== TRANSACTION CONFIGURATION =====
+  transaction:
+    default-timeout: ${TRANSACTION_TIMEOUT:30}
+    rollback-on-commit-failure: true
+
+# ===================================================================
+# APPLICATION SPECIFIC CONFIGURATION
+# ===================================================================
+
 app:
+  # ===== APPLICATION METADATA =====
+  name: SKU Generator
+  description: Sistema de Generación de Códigos SKU para Tienda de Ropa Infantil
+  version: 1.0.0
+  organization: Tu Empresa
+  contact:
+    name: Development Team
+    email: dev@empresa.com
+    url: https://empresa.com
+
+  # ===== JWT CONFIGURATION =====
   jwt:
-    secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
-    expiration: ${JWT_EXPIRATION:86400000} # 24 horas
+    # JWT Secret (debe ser cambiada en producción)
+    secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890123456789012345678901234567890}
 
+    # Token expiration (in milliseconds)
+    expiration: ${JWT_EXPIRATION:86400000} # 24 hours
+
+    # Refresh token expiration (in milliseconds)
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+
+    # Token issuer
+    issuer: ${JWT_ISSUER:sku-generator}
+
+    # Token audience
+    audience: ${JWT_AUDIENCE:sku-generator-users}
+
+    # Clock skew tolerance (in seconds)
+    clock-skew: ${JWT_CLOCK_SKEW:300} # 5 minutes
+
+  # ===== CORS CONFIGURATION =====
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080}
-    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-    allowed-headers: "*"
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080,http://localhost:4200}
+    allowed-methods: ${CORS_METHODS:GET,POST,PUT,DELETE,OPTIONS,PATCH}
+    allowed-headers: ${CORS_HEADERS:*}
+    exposed-headers: ${CORS_EXPOSED_HEADERS:Content-Length,Content-Range,X-Total-Count}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age: ${CORS_MAX_AGE:3600}
 
-  backup:
-    directory: ${BACKUP_DIR:./backups}
-    max-files: ${MAX_BACKUP_FILES:10}
+  # ===== FILE STORAGE CONFIGURATION =====
+  storage:
+    # Base directory for file storage
+    base-directory: ${STORAGE_BASE_DIR:./storage}
 
-  export:
-    temp-directory: ${TEMP_DIR:./temp}
+    # Backup directory
+    backup-directory: ${BACKUP_DIR:./storage/backups}
 
-# Configuración de logging
+    # Export directory
+    export-directory: ${EXPORT_DIR:./storage/exports}
+
+    # Temporary directory
+    temp-directory: ${TEMP_DIR:./storage/temp}
+
+    # Upload directory
+    upload-directory: ${UPLOAD_DIR:./storage/uploads}
+
+    # Maximum backup files to keep
+    max-backup-files: ${MAX_BACKUP_FILES:10}
+
+    # Cleanup settings
+    cleanup:
+      enabled: ${CLEANUP_ENABLED:true}
+      temp-files-max-age-days: ${CLEANUP_TEMP_MAX_AGE:7}
+      export-files-max-age-days: ${CLEANUP_EXPORT_MAX_AGE:30}
+      log-files-max-age-days: ${CLEANUP_LOGS_MAX_AGE:90}
+
+  # ===== BUSINESS RULES CONFIGURATION =====
+  business:
+    # SKU Code Configuration
+    sku:
+      code-length: 12
+      consecutive-digits: 3
+      max-consecutive-value: 999
+
+    # Product Configuration
+    product:
+      max-name-length: 255
+      min-name-length: 5
+      enable-duplicate-detection: true
+
+    # Search Configuration
+    search:
+      max-results-per-page: 100
+      default-page-size: 20
+
+    # Export Configuration
+    export:
+      max-records-csv: 100000
+      max-records-excel: 65000
+      max-records-json: 50000
+      include-deleted: false
+
+  # ===== SECURITY CONFIGURATION =====
+  security:
+    # Password Policy
+    password:
+      min-length: ${PASSWORD_MIN_LENGTH:8}
+      require-uppercase: ${PASSWORD_REQUIRE_UPPERCASE:true}
+      require-lowercase: ${PASSWORD_REQUIRE_LOWERCASE:true}
+      require-numbers: ${PASSWORD_REQUIRE_NUMBERS:true}
+      require-special-chars: ${PASSWORD_REQUIRE_SPECIAL:false}
+
+    # Account Lockout
+    account-lockout:
+      enabled: ${ACCOUNT_LOCKOUT_ENABLED:true}
+      max-attempts: ${ACCOUNT_LOCKOUT_MAX_ATTEMPTS:5}
+      lockout-duration-minutes: ${ACCOUNT_LOCKOUT_DURATION:30}
+
+    # Session Configuration
+    session:
+      max-sessions-per-user: ${MAX_SESSIONS_PER_USER:3}
+      timeout-minutes: ${SESSION_TIMEOUT:480} # 8 hours
+
+  # ===== AUDIT CONFIGURATION =====
+  audit:
+    enabled: ${AUDIT_ENABLED:true}
+    log-successful-authentications: ${AUDIT_LOG_AUTH_SUCCESS:true}
+    log-failed-authentications: ${AUDIT_LOG_AUTH_FAILED:true}
+    log-data-changes: ${AUDIT_LOG_DATA_CHANGES:true}
+    retention-days: ${AUDIT_RETENTION_DAYS:365}
+
+# ===================================================================
+# SERVER CONFIGURATION
+# ===================================================================
+
+server:
+  # Port Configuration
+  port: ${SERVER_PORT:8080}
+
+  # Context Path
+  servlet:
+    context-path: ${CONTEXT_PATH:}
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    session:
+      cookie:
+        name: SKUGENERATOR-SESSION
+        secure: ${COOKIE_SECURE:false}
+        http-only: true
+        same-site: lax
+        max-age: 28800 # 8 hours
+      timeout: PT8H # 8 hours
+
+  # Compression
+  compression:
+    enabled: ${SERVER_COMPRESSION:true}
+    mime-types:
+      - text/html
+      - text/xml
+      - text/plain
+      - text/css
+      - text/javascript
+      - application/javascript
+      - application/json
+      - application/xml
+    min-response-size: 1024
+
+  # HTTP/2 Support
+  http2:
+    enabled: ${SERVER_HTTP2:true}
+
+  # Error Handling
+  error:
+    whitelabel:
+      enabled: false
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: ${SERVER_ERROR_INCLUDE_STACKTRACE:never}
+    include-exception: false
+
+  # Undertow Configuration (if using Undertow)
+  undertow:
+    buffer-size: ${UNDERTOW_BUFFER_SIZE:1024}
+    io-threads: ${UNDERTOW_IO_THREADS:#{T(java.lang.Runtime).getRuntime().availableProcessors()}}
+    worker-threads: ${UNDERTOW_WORKER_THREADS:#{T(java.lang.Runtime).getRuntime().availableProcessors() * 8}}
+    direct-buffers: ${UNDERTOW_DIRECT_BUFFERS:true}
+    max-http-post-size: ${UNDERTOW_MAX_HTTP_POST_SIZE:52428800} # 50MB
+
+# ===================================================================
+# LOGGING CONFIGURATION
+# ===================================================================
+
 logging:
+  # Log Levels
   level:
-    com.skugenerator: ${LOG_LEVEL:DEBUG}
-    org.springframework.security: ${SECURITY_LOG_LEVEL:INFO}
-    org.hibernate.SQL: ${SQL_LOG_LEVEL:DEBUG}
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.skugenerator: ${LOG_LEVEL_APP:DEBUG}
+    org.springframework: ${LOG_LEVEL_SPRING:INFO}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:INFO}
+    org.springframework.web: ${LOG_LEVEL_WEB:INFO}
+    org.springframework.data: ${LOG_LEVEL_DATA:INFO}
+    org.hibernate: ${LOG_LEVEL_HIBERNATE:WARN}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:INFO}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_PARAMS:TRACE}
+    com.zaxxer.hikari: ${LOG_LEVEL_HIKARI:INFO}
+    org.flywaydb: ${LOG_LEVEL_FLYWAY:INFO}
+    org.thymeleaf: ${LOG_LEVEL_THYMELEAF:INFO}
+
+  # Log Pattern
   pattern:
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: "${CONSOLE_LOG_PATTERN:%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}}"
+    file: "${FILE_LOG_PATTERN:%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}}"
+    dateformat: "yyyy-MM-dd HH:mm:ss.SSS"
+
+  # Log File Configuration
   file:
     name: ${LOG_FILE:./logs/sku-generator.log}
+    max-size: ${LOG_FILE_MAX_SIZE:10MB}
+    max-history: ${LOG_FILE_MAX_HISTORY:30}
+    total-size-cap: ${LOG_FILE_TOTAL_SIZE_CAP:1GB}
 
-# Configuración de Actuator
+  # Logback Configuration
+  logback:
+    rollingpolicy:
+      max-file-size: ${LOG_FILE_MAX_SIZE:10MB}
+      max-history: ${LOG_FILE_MAX_HISTORY:30}
+      total-size-cap: ${LOG_FILE_TOTAL_SIZE_CAP:1GB}
+      file-name-pattern: "./logs/sku-generator.%d{yyyy-MM-dd}.%i.log.gz"
+
+# ===================================================================
+# ACTUATOR CONFIGURATION
+# ===================================================================
+
 management:
+  # Endpoints Configuration
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: ${ACTUATOR_ENDPOINTS:health,info,metrics,prometheus,loggers,configprops,env,beans,flyway,liquibase}
+        exclude: ${ACTUATOR_ENDPOINTS_EXCLUDE:shutdown,threaddump,heapdump}
+      base-path: /actuator
+      path-mapping:
+        prometheus: metrics
+    jmx:
+      exposure:
+        include: "*"
+
+  # Endpoint Details
   endpoint:
     health:
-      show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
+      show-details: ${ACTUATOR_HEALTH_SHOW_DETAILS:when-authorized}
+      show-components: when-authorized
+      probes:
         enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace
+        readiness:
+          include: readinessState,db,redis
 
-# Configuración de Swagger/OpenAPI
+    info:
+      enabled: true
+
+    metrics:
+      enabled: true
+
+    prometheus:
+      enabled: ${ACTUATOR_PROMETHEUS_ENABLED:true}
+
+    loggers:
+      enabled: true
+
+    configprops:
+      show-values: when-authorized
+
+    env:
+      show-values: when-authorized
+
+  # Health Indicators
+  health:
+    diskspace:
+      enabled: true
+      threshold: ${HEALTH_DISKSPACE_THRESHOLD:100MB}
+    db:
+      enabled: true
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+  # Metrics Configuration
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+
+  # Application Info
+  info:
+    build:
+      enabled: true
+    env:
+      enabled: true
+    git:
+      enabled: true
+      mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+  # Tracing (for future observability)
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+  prometheus:
+    metrics:
+      export:
+        enabled: ${METRICS_PROMETHEUS_ENABLED:true}
+
+# ===================================================================
+# SPRINGDOC (SWAGGER) CONFIGURATION
+# ===================================================================
+
 springdoc:
+  # API Documentation
   api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /api-docs
+    version: openapi_3_0
+
+  # Swagger UI
   swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:true}
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
-  show-actuator: true
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+    display-operation-id: false
 
-# Configuración de servidor
-server:
-  port: ${SERVER_PORT:8080}
-  servlet:
-    context-path: ${CONTEXT_PATH:/}
-  compression:
-    enabled: true
-  http2:
-    enabled: true
+  # Configuration
+  show-actuator: ${SPRINGDOC_SHOW_ACTUATOR:true}
+  use-management-port: false
+  cache:
+    disabled: ${SPRINGDOC_CACHE_DISABLED:false}
+
+  # Paths to Match
+  paths-to-match:
+    - /api/**
+
+  # Packages to Scan
+  packages-to-scan:
+    - com.skugenerator.controller.api
+
+# ===================================================================
+# INTERNATIONALIZATION
+# ===================================================================
+
+spring.messages:
+  basename: messages
+  encoding: UTF-8
+  fallback-to-system-locale: true
+  always-use-message-format: false
+  use-code-as-default-message: false
+  cache-duration: PT60S
+
+# ===================================================================
+# VALIDATION CONFIGURATION
+# ===================================================================
+
+spring.validation:
+  enabled: true

@@ -1,0 +1,338 @@
+# ===================================================================
+# SKU Generator - Docker Compose Configuration
+# ===================================================================
+# Configuración para desarrollo local con Docker
+# ===================================================================
+
+version: '3.8'
+
+networks:
+  sku-generator-network:
+    driver: bridge
+    name: sku-generator-network
+
+volumes:
+  mysql-data:
+    name: sku-generator-mysql-data
+  redis-data:
+    name: sku-generator-redis-data
+  app-logs:
+    name: sku-generator-logs
+  app-storage:
+    name: sku-generator-storage
+
+services:
+  # ===================================================================
+  # MySQL Database Service
+  # ===================================================================
+  mysql:
+    image: mysql:8.0.33
+    container_name: sku-generator-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
+      MYSQL_DATABASE: ${DB_NAME:-sku_generator_dev}
+      MYSQL_USER: ${DB_USERNAME:-sku_dev_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sku_dev_password}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - sku-generator-network
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --innodb-log-file-size=64M
+      --max-connections=200
+      --slow-query-log=1
+      --long-query-time=2
+      --slow-query-log-file=/var/log/mysql/slow.log
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password_123}"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 60s
+
+  # ===================================================================
+  # Redis Cache Service (Optional)
+  # ===================================================================
+  redis:
+    image: redis:7.0.11-alpine
+    container_name: sku-generator-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - sku-generator-network
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 30s
+
+  # ===================================================================
+  # MailHog for Email Testing
+  # ===================================================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sku-generator-mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"  # SMTP port
+      - "${MAILHOG_UI_PORT:-8025}:8025"    # Web UI port
+    networks:
+      - sku-generator-network
+    environment:
+      MH_STORAGE: maildir
+      MH_MAILDIR_PATH: /maildir
+    volumes:
+      - ./docker/mailhog/maildir:/maildir
+
+  # ===================================================================
+  # Prometheus for Metrics (Optional)
+  # ===================================================================
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: sku-generator-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/data:/prometheus
+    networks:
+      - sku-generator-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # ===================================================================
+  # Grafana for Monitoring Dashboards (Optional)
+  # ===================================================================
+  grafana:
+    image: grafana/grafana:9.5.2
+    container_name: sku-generator-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./docker/grafana/data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - sku-generator-network
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    depends_on:
+      - prometheus
+
+  # ===================================================================
+  # SKU Generator Application
+  # ===================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/sku-generator-*.jar
+    image: sku-generator:latest
+    container_name: sku-generator-app
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+
+      # Database Configuration
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-sku_generator_dev}
+      DB_USERNAME: ${DB_USERNAME:-sku_dev_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sku_dev_password}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-jwt-tokens-development-only}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+
+      # Redis Configuration (if enabled)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # Mail Configuration
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # CORS Configuration
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4200,http://localhost:8080}
+
+      # Storage Configuration
+      STORAGE_BASE_DIR: /app/storage
+      BACKUP_DIR: /app/storage/backups
+      EXPORT_DIR: /app/storage/exports
+      TEMP_DIR: /app/storage/temp
+
+      # Logging Configuration
+      LOG_FILE: /app/logs/sku-generator.log
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
+
+      # JVM Options
+      JAVA_OPTS: >
+        -Xms512m 
+        -Xmx1024m 
+        -XX:+UseG1GC 
+        -XX:+UseStringDeduplication 
+        -XX:+OptimizeStringConcat
+        -Dfile.encoding=UTF-8
+        -Duser.timezone=America/Bogota
+
+    volumes:
+      - app-logs:/app/logs
+      - app-storage:/app/storage
+      - ./docker/app/application-docker.yml:/app/config/application-docker.yml:ro
+    networks:
+      - sku-generator-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 120s
+
+  # ===================================================================
+  # Nginx Reverse Proxy (Optional)
+  # ===================================================================
+  nginx:
+    image: nginx:1.24.0-alpine
+    container_name: sku-generator-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./docker/nginx/logs:/var/log/nginx
+    networks:
+      - sku-generator-network
+    depends_on:
+      app:
+        condition: service_healthy
+    profiles:
+      - nginx
+
+  # ===================================================================
+  # MySQL Admin (phpMyAdmin) for Database Management
+  # ===================================================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.1
+    container_name: sku-generator-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USERNAME:-sku_dev_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-sku_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
+      PMA_ARBITRARY: 1
+      PMA_ABSOLUTE_URI: http://localhost:${PHPMYADMIN_PORT:-8081}/
+    networks:
+      - sku-generator-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - admin
+
+  # ===================================================================
+  # Redis Commander for Redis Management
+  # ===================================================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sku-generator-redis-commander
+    restart: unless-stopped
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8082}:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: ${REDIS_COMMANDER_USER:-admin}
+      HTTP_PASSWORD: ${REDIS_COMMANDER_PASSWORD:-admin123}
+    networks:
+      - sku-generator-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - admin
+
+  # ===================================================================
+  # Elasticsearch for Advanced Search (Optional)
+  # ===================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: sku-generator-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      xpack.security.enabled: false
+      xpack.security.enrollment.enabled: false
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - ./docker/elasticsearch/data:/usr/share/elasticsearch/data
+    networks:
+      - sku-generator-network
+    profiles:
+      - search
+
+  # ===================================================================
+  # Kibana for Elasticsearch Visualization (Optional)
+  # ===================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: sku-generator-kibana
+    restart: unless-stopped
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: ""
+      ELASTICSEARCH_PASSWORD: ""
+    networks:
+      - sku-generator-network
+    depends_on:
+      - elasticsearch
+    profiles:
+      - search
