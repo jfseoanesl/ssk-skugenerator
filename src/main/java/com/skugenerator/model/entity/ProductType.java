@@ -3,6 +3,7 @@ package com.skugenerator.model.entity;
 import com.skugenerator.util.Constants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Size as ValidationSize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -57,7 +58,7 @@ public class ProductType extends BaseEntity {
      * Debe ser único y descriptivo para facilitar la identificación.
      */
     @NotBlank(message = "El nombre del tipo de producto es obligatorio")
-    @Size(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
+    @ValidationSize(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
             max = Constants.Validation.CONFIG_NAME_MAX_LENGTH,
             message = "El nombre debe tener entre {min} y {max} caracteres")
     @Column(name = "name", length = 100, nullable = false)
@@ -67,7 +68,7 @@ public class ProductType extends BaseEntity {
      * Descripción detallada del tipo de producto.
      * Campo opcional para proporcionar más información sobre el tipo.
      */
-    @Size(max = 500, message = "La descripción no puede exceder los 500 caracteres")
+    @ValidationSize(max = 500, message = "La descripción no puede exceder los 500 caracteres")
     @Column(name = "description", length = 500)
     private String description;
 
@@ -191,9 +192,8 @@ public class ProductType extends BaseEntity {
      * Normaliza los datos antes de persistir.
      * Limpia espacios y establece valores por defecto.
      */
-    @PrePersist
     @PreUpdate
-    private void normalize() {
+    private void normalizeProductType() {
         if (code != null) {
             code = code.trim();
         }

@@ -60,7 +60,7 @@ public class Category extends BaseEntity {
      * Debe ser único y descriptivo para facilitar la identificación.
      */
     @NotBlank(message = "El nombre de la categoría es obligatorio")
-    @Size(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
+    @jakarta.validation.constraints.Size(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
             max = Constants.Validation.CONFIG_NAME_MAX_LENGTH,
             message = "El nombre debe tener entre {min} y {max} caracteres")
     @Column(name = "name", length = 100, nullable = false)
@@ -70,7 +70,7 @@ public class Category extends BaseEntity {
      * Descripción detallada de la categoría.
      * Campo opcional para proporcionar más información sobre la categoría.
      */
-    @Size(max = 500, message = "La descripción no puede exceder los 500 caracteres")
+    @jakarta.validation.constraints.Size(max = 500, message = "La descripción no puede exceder los 500 caracteres")
     @Column(name = "description", length = 500)
     private String description;
 
@@ -102,7 +102,7 @@ public class Category extends BaseEntity {
      * Icono CSS para representación visual.
      * Clase CSS para mostrar iconos en la interfaz.
      */
-    @Size(max = 50, message = "El icono no puede exceder los 50 caracteres")
+    @jakarta.validation.constraints.Size(max = 50, message = "El icono no puede exceder los 50 caracteres")
     @Column(name = "icon", length = 50)
     private String icon;
 
@@ -231,39 +231,6 @@ public class Category extends BaseEntity {
         return code != null &&
                 code.matches(Constants.Validation.CATEGORY_CODE_PATTERN) &&
                 !code.trim().isEmpty();
-    }
-
-    /**
-     * Normaliza los datos antes de persistir.
-     * Limpia espacios y establece valores por defecto.
-     */
-    @PrePersist
-    @PreUpdate
-    private void normalize() {
-        if (code != null) {
-            code = code.trim();
-        }
-        if (name != null) {
-            name = name.trim();
-        }
-        if (description != null) {
-            description = description.trim();
-            if (description.isEmpty()) {
-                description = null;
-            }
-        }
-        if (displayOrder == null) {
-            displayOrder = 1;
-        }
-        if (allowsSubcategories == null) {
-            allowsSubcategories = true;
-        }
-        if (icon != null) {
-            icon = icon.trim();
-            if (icon.isEmpty()) {
-                icon = null;
-            }
-        }
     }
 
     // ===================================================================
