@@ -3,7 +3,7 @@ package com.skugenerator.model.entity;
 import com.skugenerator.util.Constants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import jakarta.validation.constraints.Size as ValidationSize;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,7 +59,7 @@ public class Subcategory extends BaseEntity {
      * Debe ser descriptivo para facilitar la identificación.
      */
     @NotBlank(message = "El nombre de la subcategoría es obligatorio")
-    @ValidationSize(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
+    @Size(min = Constants.Validation.CONFIG_NAME_MIN_LENGTH,
             max = Constants.Validation.CONFIG_NAME_MAX_LENGTH,
             message = "El nombre debe tener entre {min} y {max} caracteres")
     @Column(name = "name", length = 100, nullable = false)
@@ -69,7 +69,7 @@ public class Subcategory extends BaseEntity {
      * Descripción detallada de la subcategoría.
      * Campo opcional para proporcionar más información sobre la subcategoría.
      */
-    @ValidationSize(max = 500, message = "La descripción no puede exceder los 500 caracteres")
+    @Size(max = 500, message = "La descripción no puede exceder los 500 caracteres")
     @Column(name = "description", length = 500)
     private String description;
 
@@ -102,7 +102,7 @@ public class Subcategory extends BaseEntity {
      * Palabras clave para búsqueda.
      * Separadas por comas para facilitar búsquedas.
      */
-    @ValidationSize(max = 255, message = "Las palabras clave no pueden exceder los 255 caracteres")
+    @Size(max = 255, message = "Las palabras clave no pueden exceder los 255 caracteres")
     @Column(name = "keywords", length = 255)
     private String keywords;
 
@@ -268,7 +268,6 @@ public class Subcategory extends BaseEntity {
      * Normaliza los datos antes de persistir.
      * Limpia espacios y establece valores por defecto.
      */
-    @PreUpdate
     private void normalizeSubcategory() {
         if (code != null) {
             code = code.trim();
@@ -300,7 +299,6 @@ public class Subcategory extends BaseEntity {
      * Valida la consistencia antes de persistir.
      * Verifica que la subcategoría tenga una categoría válida.
      */
-    @PreUpdate
     private void validateConsistency() {
         if (category == null) {
             throw new IllegalStateException("La subcategoría debe tener una categoría asignada");
